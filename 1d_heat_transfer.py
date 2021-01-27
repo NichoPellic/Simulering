@@ -23,3 +23,4 @@ def calculate(u):
     return u
 
 def plot():
+ return
