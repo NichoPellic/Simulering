@@ -2,30 +2,42 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation
+from mpl_toolkits.mplot3d import Axes3D
 
-delta_x = 1     #Each step
-alpha = 0.25    #Coefficient
+#Create the 3D figure object
+fig = plt.figure()
+fig_3d = fig.add_subplot(111, projection="3d")
 
-inital_value = 100
-left_boundry = 0
-rigth_boundry = 0
+#Config values
+delta_x = 1         #Each step
+alpha = 0.25        #Coefficient
 
-iterations = 1000
+inital_value = 100  #Initial temp value
+left_boundry = 0    
+rigth_boundry = 0  
 
-x_axis = 100    #Aka lenght
+iterations = 100    #Is the same as time
+
+x_axis = 100        #Is the same as lenght
 
 nodes = np.linspace(0, x_axis)
 
+#Create an empty 2D array
 u_array = np.empty((iterations, x_axis))
 
 u_array.fill(0)
+
+#Needed to create 2D arrays for 3D model
+x = np.arange(x_axis)
+z = np.arange(iterations)
+
 
 #Sets heatsource for all time iterations
 for i in range(iterations - 1):
     u_array[i][int(x_axis/2)] = inital_value
 
-
-def calculate(u):
+#Calculates the diffusion
+def calculate_forward_euler(u):
     for k in range(iterations - 1):        
         for i in range(x_axis - 1):
             #Skips the midlepoint (heat source)
@@ -34,25 +46,46 @@ def calculate(u):
 
     return u
 
-def plotGraph(u_val, k):
+def calculate_backward_euler(u):
+
+    return
+
+#Plot a simple 2D graph at time k
+def plot_2d_graph(u_val, k):
     plt.clf()
     plt.title("Temperature at " + str(k))
     plt.xlabel("m")
     plt.ylabel("Temperature")
-
-    plt.plot(u_val)
-   
+    plt.plot(u_val)   
     return plt
 
+#Creates a new image for each frame
 def animate(k):
-    plotGraph(u_array[k], k)
+    plot_2d_graph(u_array[k], k)
+
+#Plots the model in a wireframe style
+def plot_3d_mesh():
+    #Creates 2D arrays for the X and Z axis 
+    X, Z = np.meshgrid(x, z)
+    fig_3d.set_xlabel("m")    
+    fig_3d.set_ylabel("Temperature")
+    fig_3d.set_zlabel("time")
+    fig_3d.plot_wireframe(X, u_array, Z)
+    plt.show()
+
 
 print("Starting calculations...")
-u_array = calculate(u_array)
+u_array = calculate_forward_euler(u_array)
 print("Done calculating")
 
-print("Creating animations...")
-anim = animation.FuncAnimation(plt.figure(), animate, interval=1, frames=iterations, repeat=False)
-anim.save("graph.gif")
+#Different options to run
+if(False):
+    print("Creating animations...")
+    #Create an animation of the heat set 
+    anim = animation.FuncAnimation(plt.figure(), animate, interval=1, frames=iterations, repeat=False)
+    anim.save("graph.gif")
+
+else:
+    plot_3d_mesh()
 
 print("Program done!")
