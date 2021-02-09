@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
@@ -13,10 +14,10 @@ delta_x = 1         #Each step
 alpha = 0.25        #Coefficient
 
 inital_value = 100  #Initial temp value
-left_boundry = 0    
-rigth_boundry = 0  
+left_boundry = 0    #Never used?
+rigth_boundry = 0   #Never used?
 
-iterations = 100    #Is the same as time
+iterations = 2000    #Is the same as time
 
 x_axis = 100        #Is the same as lenght
 
@@ -68,11 +69,18 @@ def plot_3d_mesh():
     #Creates 2D arrays for the X and Z axis 
     X, Z = np.meshgrid(x, z)
     fig_3d.set_xlabel("m")    
-    fig_3d.set_ylabel("Temperature")
-    fig_3d.set_zlabel("time")
-    fig_3d.plot_wireframe(X, u_array, Z)
+    fig_3d.set_ylabel("time")
+    fig_3d.set_zlabel("temp")
+    fig_3d.plot_wireframe(X, Z, u_array)
     plt.show()
 
+def plot_3d_solid():
+    X, Z = np.meshgrid(x, z)
+    fig_3d.set_xlabel("length")    
+    fig_3d.set_ylabel("time")
+    fig_3d.set_zlabel("temp")
+    fig_3d.plot_surface(X, Z, u_array, cmap=cm.coolwarm)
+    plt.show()
 
 print("Starting calculations...")
 u_array = calculate_forward_euler(u_array)
@@ -87,5 +95,6 @@ if(False):
 
 else:
     plot_3d_mesh()
+    #plot_3d_solid()
 
 print("Program done!")
