@@ -16,7 +16,7 @@ alpha = 0.25                #Coefficient
 max_temp = 100              #Maximum temp
 inital_value = 100          #Initial temp value
 
-iterations = 1000           #Is the same as time
+iterations = 300           #Is the same as time
 
 x_axis = 50                 #Is the same as lenght
 
@@ -33,24 +33,25 @@ nodes = np.linspace(0, x_axis)
 #Create an empty 2D array
 u_array = np.empty((iterations, x_axis))
 
-#Create an empty for a plate object
+#Create an empty array for a plate object
 u_array_2d = np.empty((iterations, y_axis_plate, x_axis_plate))
 
 u_array.fill(0)
 u_array_2d.fill(0)
-
-#Redo this
-u_initial = np.random.uniform(low=40, high=100, size=(y_axis_plate,x_axis_plate))
-u_array_2d[0,:,:] = u_initial
 
 #Needed to create 2D arrays for 3D model
 x = np.arange(x_axis)
 y = np.arange(iterations)
 
 #Bool vars for different modes
-heated_midle = False            #If false then the endpoints are heated
+heated_midle = True            #If false then the endpoints are heated
 constant_heat_source = True     #If false then the heat is only applied on the first iteration
 heat_source_limit = 100         #Number of iterations heat is applied
+
+#If not heated middle, set the middle of the 2D array to be uniform random values
+if(not heated_midle):
+    u_initial = np.random.uniform(low=40, high=100, size=(y_axis_plate,x_axis_plate))
+    u_array_2d[0,:,:] = u_initial
 
 #Calculates the diffusion
 def calculate_forward_euler_1d(u):
@@ -90,9 +91,17 @@ def calculate_forward_euler_1d(u):
 
 def calculate_forward_euler_2d(u):
 
-    set_heat_source = True
+    set_heat_source = True       
     
-    for k in range(iterations - 1):        
+    for k in range(iterations - 1):     
+
+        if(constant_heat_source or k <= heat_source_limit):
+            set_heat_source = True
+
+        if(set_heat_source):
+            if(heated_midle):
+                u_array_2d[k][int(y_axis_plate/2)][int(x_axis_plate/2)] = inital_value
+
         for i in range(1, y_axis_plate - 1):
             for j in range(1, x_axis_plate - 1):
                 u[k + 1, i, j] = alpha * ((u[k][i+1][j] + u[k][i-1][j] + u[k][i][j+1] + u[k][i][j-1] - 4*u[k][i][j]) /  (delta_x**2))+ u[k][i][j]
@@ -106,7 +115,7 @@ def calculate_backward_euler_1d(u):
 #Plot a simple 2D graph at time k
 def plot_2d_graph(u_val, k):
     plt.clf()
-    plt.title("Temperature at " + str(k))
+    plt.title("Temperature at iteration " + str(k))
     plt.xlabel("m")
     plt.ylabel("Temperature")
     #plt.pcolormesh(u_val, cmap=cm.jet, vmin=0, vmax=max_temp)  
@@ -115,9 +124,9 @@ def plot_2d_graph(u_val, k):
 
 def plot_2d_plate(u_val, k):
     plt.clf()
-    plt.title("Temperature at " + str(k))
-    plt.ylabel("Width")
-    plt.xlabel("Height")
+    plt.title("Temperature at iteration" + str(k))
+    plt.ylabel("Height")
+    plt.xlabel("Width")
     plt.pcolormesh(u_val, cmap=cm.jet, vmin=0, vmax=max_temp)    
     plt.colorbar()
     return plt
@@ -148,8 +157,8 @@ def plot_3d_solid():
 
 #Creates a new image for each frame
 def animate(k):
-    plot_2d_graph(u_array[k], k)
-    #plot_2d_plate(u_array_2d[k], k)
+    #plot_2d_graph(u_array[k], k)
+    plot_2d_plate(u_array_2d[k], k)
 
 print("Heat Diffusion Group 2")
 print("Starting calculations...")
@@ -159,13 +168,14 @@ u_array_2d = calculate_forward_euler_2d(u_array_2d)
 
 print("Done calculating")
 
-if(False):
+if(True):
     print("Creating animations...")
     #Create an animation of the heat set and save it as a .gif
     anim = animation.FuncAnimation(plt.figure(), animate, interval=1, frames=iterations, repeat=False)
     anim.save("heat_map.gif")
 
-plot_3d_mesh()
-plot_3d_solid()
+else:
+    plot_3d_mesh()
+    plot_3d_solid()
 
 print("Program done!")
