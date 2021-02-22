@@ -1,9 +1,11 @@
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import cm
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
+from numpy.core import numeric
 
 #Create the 3D figure object
 fig = plt.figure()
@@ -16,7 +18,7 @@ alpha = 0.25                #Coefficient
 max_temp = 100              #Maximum temp
 inital_value = 100          #Initial temp value
 
-iterations = 300           #Is the same as time
+iterations = 100           #Is the same as time
 
 x_axis = 50                 #Is the same as lenght
 
@@ -30,23 +32,29 @@ y_axis_plate = 30   #Height of plate
 
 nodes = np.linspace(0, x_axis)
 
+numeric_x = np.linspace(-x_axis, x_axis, 100)
 #Create an empty 2D array
 u_array = np.empty((iterations, x_axis))
 
 #Create an empty array for a plate object
 u_array_2d = np.empty((iterations, y_axis_plate, x_axis_plate))
+u_array_analytical = np.empty((iterations, x_axis*2))
 
 u_array.fill(0)
 u_array_2d.fill(0)
+u_array_analytical.fill(0)
 
 #Needed to create 2D arrays for 3D model
 x = np.arange(x_axis)
 y = np.arange(iterations)
 
-#Bool vars for different modes
-heated_midle = True            #If false then the endpoints are heated
-constant_heat_source = True     #If false then the heat is only applied on the first iteration
-heat_source_limit = 100         #Number of iterations heat is applied
+#Settings
+heated_midle = True             #If false then the endpoints are heated
+constant_heat_source = False     #If false then the heat is only applied on the first iteration
+heat_source_limit = 1           #Number of iterations heat is applied
+
+selected_mode = "Analytical"
+create_gif = True
 
 #If not heated middle, set the middle of the 2D array to be uniform random values
 if(not heated_midle):
@@ -89,6 +97,7 @@ def calculate_forward_euler_1d(u):
 
     return u
 
+#Calculates the heat diffusion in a 2D plate
 def calculate_forward_euler_2d(u):
 
     set_heat_source = True       
@@ -102,14 +111,22 @@ def calculate_forward_euler_2d(u):
             if(heated_midle):
                 u_array_2d[k][int(y_axis_plate/2)][int(x_axis_plate/2)] = inital_value
 
+            set_heat_source = False
+
         for i in range(1, y_axis_plate - 1):
             for j in range(1, x_axis_plate - 1):
                 u[k + 1, i, j] = alpha * ((u[k][i+1][j] + u[k][i-1][j] + u[k][i][j+1] + u[k][i][j-1] - 4*u[k][i][j]) /  (delta_x**2))+ u[k][i][j]
 
     return u 
 
-def calculate_backward_euler_1d(u):
+#Gausian function for heat kernel 
+def analytical_solution():
 
+    u_array_analytical[0][int(x_axis/2)] = inital_value  
+
+    for k in range(1, iterations - 1):
+        for i in range(-x_axis, x_axis - 1):    
+            u_array_analytical[k][i + 50] = (1/(2*np.math.sqrt(np.math.pi*((k)/1)))*(np.math.e**((-(i**2))/(4*k/1))))           
     return
 
 #Plot a simple 2D graph at time k
@@ -118,13 +135,13 @@ def plot_2d_graph(u_val, k):
     plt.title("Temperature at iteration " + str(k))
     plt.xlabel("m")
     plt.ylabel("Temperature")
-    #plt.pcolormesh(u_val, cmap=cm.jet, vmin=0, vmax=max_temp)  
+    plt.ylim(0, max_temp)
     plt.plot(u_val)   
     return plt
 
 def plot_2d_plate(u_val, k):
     plt.clf()
-    plt.title("Temperature at iteration" + str(k))
+    plt.title("Temperature at iteration " + str(k))
     plt.ylabel("Height")
     plt.xlabel("Width")
     plt.pcolormesh(u_val, cmap=cm.jet, vmin=0, vmax=max_temp)    
@@ -155,24 +172,42 @@ def plot_3d_solid():
     plt.savefig("solid_model.png")
     #plt.show()
 
+def plot_normal_distribution(u_val, k):
+    plt.clf()
+    plt.title("Temperature at iteration " + str(k))
+    #plt.xlabel("m")
+    plt.ylabel("Temperature")
+    plt.ylim(0, 1)
+    #plt.xlim(-x_axis, x_axis)
+    plt.plot(numeric_x, u_val[k])
+    return plt
+
+
 #Creates a new image for each frame
 def animate(k):
-    #plot_2d_graph(u_array[k], k)
-    plot_2d_plate(u_array_2d[k], k)
+    if(selected_mode == "1D"):
+        plot_2d_graph(u_array[k], k)
+    
+    elif(selected_mode == "2D"):
+        plot_2d_plate(u_array_2d[k], k)
+
+    elif(selected_mode == "Analytical"):
+        plot_normal_distribution(u_array_analytical, k)
 
 print("Heat Diffusion Group 2")
 print("Starting calculations...")
 
 u_array = calculate_forward_euler_1d(u_array)
 u_array_2d = calculate_forward_euler_2d(u_array_2d)
+analytical_solution()
 
 print("Done calculating")
 
-if(True):
+if(create_gif):
     print("Creating animations...")
     #Create an animation of the heat set and save it as a .gif
     anim = animation.FuncAnimation(plt.figure(), animate, interval=1, frames=iterations, repeat=False)
-    anim.save("heat_map.gif")
+    anim.save(selected_mode + ".gif")
 
 else:
     plot_3d_mesh()
