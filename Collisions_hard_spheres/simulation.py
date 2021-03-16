@@ -36,7 +36,8 @@ class Particle:
         else:
             delta_t_collision = -(delta_v_delta_r + np.sqrt(d)) / (delta_v_delta_v)
 
-        #print("Particle collision:", delta_t_collision)
+        if(delta_t_collision < 5):
+            print("Particle collision:", delta_t_collision)
         return delta_t_collision
     
     #Collision with vertical wall
@@ -100,6 +101,9 @@ class Event:
         
     def __lt__(self, other):
         return self.time_collision < other.time_collision
+    
+    def __eq__(self, other):
+        return (self.p1 == other.p1) and (self.p2 == other.p2)
 
     def compareTo(self, other):
         if((self.p1 == other.p1) and (self.p2 == other.p2)):
@@ -123,10 +127,10 @@ p2 = Particle(0.8, 0.7, 0.01, 0.03, 0.01, 1)
 """
 
 
-n_particles = 20
+n_particles = 100
 particles = []
 for i in range(n_particles):
-    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(0.0, 0.01), random.uniform(0.0, 0.01), 0.025, 1))
+    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.005, 0.005), random.uniform(-0.005, 0.005), 0.1, 1))
 
 
 
@@ -183,15 +187,31 @@ def test_plot(self):
     iterator += 1
     print(iterator)
     global priority_queue
+    global particles
     for i in range(n_particles - 1):
-        if(particles[i].collides(particles[i + 1]) < 100):
+        if(particles[i].collides(particles[i + 1]) < 10):
             priority_queue.append(Event(particles[i], particles[i + 1], particles[i].collides(particles[i + 1])))
 
     for i in range(n_particles):
-        if(particles[i].collidesX() < 100):
-            priority_queue.append(Event(None, particles[i], particles[i].collidesX()))
-        if(particles[i].collidesY() < 100):
-            priority_queue.append(Event(particles[i], None, particles[i].collidesY()))
+        if(particles[i].collidesX() < 5):
+            event = Event(None, particles[i], particles[i].collidesX())
+            for j in range(len(priority_queue)):
+                if(event == priority_queue[j]):
+                    priority_queue[j] = event
+            priority_queue.append(event)
+        
+        if(particles[i].collidesY() < 5):
+            event = Event(particles[i], None, particles[i].collidesY())
+            for j in range(len(priority_queue)):
+                if(event == priority_queue[j]):
+                    priority_queue[j] = event
+            
+            priority_queue.append(event)
+            
+            #priority_queue.append(Event(particles[i], None, particles[i].collidesY()))
+            
+            
+            
     
     priority_queue = sorted(priority_queue)
     
@@ -200,7 +220,7 @@ def test_plot(self):
         particles[i].ry += particles[i].vy
 
     for i in range(len(priority_queue)):
-        if((priority_queue[i].getParticleOne() is not None) and (priority_queue[i].getParticleTwo() is not None) and (priority_queue[i].getTime() < 0.01)):
+        if((priority_queue[i].getParticleOne() is not None) and (priority_queue[i].getParticleTwo() is not None) and (priority_queue[i].getTime() < 1)):
             priority_queue[i].getParticleOne().bounce(priority_queue[i].getParticleTwo())
 
         if((priority_queue[i].getParticleOne() is not None) and (priority_queue[i].getParticleTwo() is None) and (priority_queue[i].getParticleOne().collidesY() < 1)):
@@ -209,11 +229,11 @@ def test_plot(self):
             priority_queue[i].getParticleTwo().bounceX()
         
     for i in range(n_particles):
-        plt.scatter(particles[i].rx, particles[i].ry)
+        plt.scatter(particles[i].rx, particles[i].ry, s = (np.pi * np.square(particles[i].radius)))
     return plt
 
 anim = animation.FuncAnimation(plt.figure(), test_plot, interval=1, frames=iterations, repeat=False)
-anim.save("test" + ".gif")
-#plt.show()
+#anim.save("test" + ".gif")
+plt.show()
 print("Done")
 
