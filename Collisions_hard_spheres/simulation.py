@@ -32,7 +32,6 @@ class Particle:
         _delta_r_delta_r = np.dot(delta_r, delta_r)
         _delta_v_delta_v = np.dot(delta_v, delta_v)
 
-        #Should these be self?
         delta_v_delta_r = (delta_vx * delta_rx) + (delta_vy * delta_ry)
         _delta_v_delta_r = np.dot(delta_v, delta_r)
 
@@ -43,18 +42,10 @@ class Particle:
         elif (d < 0):
             delta_t_collision = 9999
         else:
-            #Aka it will collide with another particle
             delta_t_collision = -(delta_v_delta_r + np.sqrt(d)) / (delta_v_delta_v)
 
             if(delta_t_collision < 0):
                 delta_t_collision = -(delta_v_delta_r - np.sqrt(d)) / (delta_v_delta_v)
-
-            #shouldn't be possible, but here we are...
-            #if(delta_t_collision < 0):
-            #    delta_t_collision = 9999
-
-            #else:
-            #print("Particle collision:", delta_t_collision)
             
         return delta_t_collision
     
@@ -141,79 +132,67 @@ class Event:
 
     def getParticleTwo(self):
         return self.p2
+
+    def getDeltaT(self):
+        return self.time_collision
         
-
-"""
-#               rx, ry, vx, vy, radius, mass
-p1 = Particle(0.2, 0.3, 0.01, 0.04, 0.01, 1)
-p2 = Particle(0.8, 0.7, 0.01, 0.03, 0.01, 1)
-"""
-
-
 n_particles = 5
 particles = []
 for i in range(n_particles):
     particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), 0.8, 1))
 
-
-
 priority_queue = []
 heapq.heapify(priority_queue)
 priority_queue = sorted(priority_queue)
-
-#p1 = Particle(0.2, 0.5, 0.01, 0.0, 0.01, 1)
-#p2 = Particle(0.8, 0.5, -0.01, 0., 0.01, 1)
 
 iterations = 200
 iterator = 0
 print("Creating animations...")
 
+iteration_length = 0
+plot_iteratior = 0
+steps = 0
+
 def test_plot(self):
 
-    """
-    if (p1.collides(p2) < 0.65):
-        p1.bounce(p2)
-    if (p1.collidesX() < 0):
-        p1.bounceX()
-    if (p1.collidesY() < 0):
-        p1.bounceY()
-    if (p2.collidesX() < 0):
-        p2.bounceX()
-    if (p2.collidesY() < 0):
-        p2.bounceY()
+    global plot_iteratior
+    global iteration_length
+    global steps
 
-    p1.rx += p1.vx
-    p1.ry += p1.vy
-    p2.rx += p2.vx
-    p2.ry += p2.vy
-    """
     plt.clf()
     plt.title("Iteration")
     plt.xlabel("x label")
     plt.ylabel("y label")
     plt.xlim(0, 1)
     plt.ylim(0, 1)
-    #plt.scatter(p1.rx, p1.ry)
-    #plt.scatter(p2.rx, p2.ry)
-    
 
-    """
-    1. Sjekke alle kollisjoner for partikler, mot vegg og hverandre. 
-    2. Hvis kollisjon < 9999, lag event
-    3. Sorter events etter kollisjons tid
-    4. Vent på kollisjon <=> avanser alle partikler
-    5. Start på nytt
+    #Add check for events
+    if(plot_iteratior == iteration_length):   
+        add_event()
 
-    """
+        event = priority_queue.pop()
+
+        steps = np.linspace(0, event.getDeltaT(), 10)
+        iteration_length = (len(steps) - 1) 
+
+    #Plot particles
+    else:
+        for i in range(n_particles):
+            particles[i].rx += particles[i].vx * steps[plot_iteratior]
+            particles[i].ry += particles[i].vy * steps[plot_iteratior]
+            plt.scatter(particles[i].rx, particles[i].ry, s = (np.pi * np.square(particles[i].radius)))
+
+        plot_iteratior += 1
+
+    return plt
     
-    global iterator
-    iterator += 1
-    #print(iterator)
-    global priority_queue
-    global particles
+#Add event to the event queue
+def add_event():
+
     for i in range(n_particles - 1):
-        if(particles[i].collides(particles[i + 1]) < 500):
-            priority_queue.append(Event(particles[i], particles[i + 1], particles[i].collides(particles[i + 1])))
+        for j in range(n_particles - 1):
+            if(particles[i].collides(particles[j]) < 500):
+                priority_queue.append(Event(particles[i], particles[i + 1], particles[i].collides(particles[i + 1])))
 
     for i in range(n_particles):
         if(particles[i].collidesX() < 5):
@@ -231,19 +210,9 @@ def test_plot(self):
             
             priority_queue.append(event)
             
-            #priority_queue.append(Event(particles[i], None, particles[i].collidesY()))
-            
-    
-    priority_queue = sorted(priority_queue)
-    
-    delta_t = priority_queue.pop()
+            #priority_queue.append(Event(particles[i], None, particles[i].collidesY()))   
 
-    steps = np.linspace(0, delta_t, 100)
-
-    for i in range(len(steps) - 1):
-        particles[i].rx += particles[i].vx
-        particles[i].ry += particles[i].vy
-
+    #Move stuff here?
 
    # for i in range(n_particles):
    #     particles[i].rx += particles[i].vx
@@ -257,15 +226,19 @@ def test_plot(self):
             priority_queue[i].getParticleOne().bounceY()
         if((priority_queue[i].getParticleOne() is None) and (priority_queue[i].getParticleTwo() is not None) and (priority_queue[i].getParticleTwo().collidesX() < 1)):
             priority_queue[i].getParticleTwo().bounceX()
-        
-    for i in range(n_particles):
-        plt.scatter(particles[i].rx, particles[i].ry, s = (np.pi * np.square(particles[i].radius)))
-        if(i == 0):
-            print("Particle ", i , " " ,particles[i].rx)
-    return plt
+   
 
 anim = animation.FuncAnimation(plt.figure(), test_plot, interval=1, frames=iterations, repeat=False)
 #anim.save("test" + ".gif")
 plt.show()
 print("Done")
 
+
+def keep_this():
+    event = priority_queue.pop()
+
+    steps = np.linspace(0, event.getDeltaT, 100)
+
+    for i in range(len(steps) - 1):
+        particles[i].rx += particles[i].vx
+        particles[i].ry += particles[i].vy
