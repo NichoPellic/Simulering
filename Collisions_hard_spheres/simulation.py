@@ -25,7 +25,16 @@ class Particle:
 
         delta_r_delta_r = np.square(delta_rx) + np.square(delta_ry)
         delta_v_delta_v = np.square(delta_vx) + np.square(delta_vy)
+
+        delta_r = ((self.rx - p2.rx),(self.ry - p2.ry))
+        delta_v = ((self.vx - p2.vx),(self.vy - p2.vy))
+        
+        _delta_r_delta_r = np.dot(delta_r, delta_r)
+        _delta_v_delta_v = np.dot(delta_v, delta_v)
+
+        #Should these be self?
         delta_v_delta_r = (delta_vx * delta_rx) + (delta_vy * delta_ry)
+        _delta_v_delta_r = np.dot(delta_v, delta_r)
 
         d = np.square(delta_v_delta_r) - (delta_v_delta_v * (delta_r_delta_r - (np.square(self.radius + p2.radius))))
 
@@ -34,10 +43,19 @@ class Particle:
         elif (d < 0):
             delta_t_collision = 9999
         else:
+            #Aka it will collide with another particle
             delta_t_collision = -(delta_v_delta_r + np.sqrt(d)) / (delta_v_delta_v)
 
-        if(delta_t_collision < 5):
-            print("Particle collision:", delta_t_collision)
+            if(delta_t_collision < 0):
+                delta_t_collision = -(delta_v_delta_r - np.sqrt(d)) / (delta_v_delta_v)
+
+            #shouldn't be possible, but here we are...
+            #if(delta_t_collision < 0):
+            #    delta_t_collision = 9999
+
+            #else:
+            #print("Particle collision:", delta_t_collision)
+            
         return delta_t_collision
     
     #Collision with vertical wall
@@ -49,7 +67,7 @@ class Particle:
         else:
             delta_t_collision = 9999
 
-        return delta_t_collision
+        return abs(delta_t_collision)
 
     #Collision with horizontal wall
     def collidesY(self):
@@ -60,7 +78,7 @@ class Particle:
         else:
             delta_t_collision = 9999
 
-        return delta_t_collision
+        return abs(delta_t_collision)
 
     #Collision with other particle
     def bounce(self, p2):
@@ -69,7 +87,12 @@ class Particle:
         delta_ry = self.ry - p2.ry
         delta_vx = self.vx - p2.vx
         delta_vy = self.vy - p2.vy
+        delta_r = ((self.rx - p2.rx),(self.ry - p2.ry))
+        delta_v = ((self.vx - p2.vx),(self.vy - p2.vy))
+
         delta_v_delta_r = (delta_vx * delta_rx) + (delta_vy * delta_ry)
+        #delta_v_delta_r = np.dot(delta_v, delta_r)
+
 
         j = (2 * self.mass * p2.mass * delta_v_delta_r) / ((self.radius + p2.radius) * (self.mass + p2.mass)) 
         j_x = (j * delta_rx) / (self.radius + p2.radius)
@@ -127,10 +150,10 @@ p2 = Particle(0.8, 0.7, 0.01, 0.03, 0.01, 1)
 """
 
 
-n_particles = 100
+n_particles = 5
 particles = []
 for i in range(n_particles):
-    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.005, 0.005), random.uniform(-0.005, 0.005), 0.1, 1))
+    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), 0.8, 1))
 
 
 
@@ -185,11 +208,11 @@ def test_plot(self):
     
     global iterator
     iterator += 1
-    print(iterator)
+    #print(iterator)
     global priority_queue
     global particles
     for i in range(n_particles - 1):
-        if(particles[i].collides(particles[i + 1]) < 10):
+        if(particles[i].collides(particles[i + 1]) < 500):
             priority_queue.append(Event(particles[i], particles[i + 1], particles[i].collides(particles[i + 1])))
 
     for i in range(n_particles):
@@ -210,14 +233,21 @@ def test_plot(self):
             
             #priority_queue.append(Event(particles[i], None, particles[i].collidesY()))
             
-            
-            
     
     priority_queue = sorted(priority_queue)
     
-    for i in range(n_particles):
+    delta_t = priority_queue.pop()
+
+    steps = np.linspace(0, delta_t, 100)
+
+    for i in range(len(steps) - 1):
         particles[i].rx += particles[i].vx
         particles[i].ry += particles[i].vy
+
+
+   # for i in range(n_particles):
+   #     particles[i].rx += particles[i].vx
+   #     particles[i].ry += particles[i].vy
 
     for i in range(len(priority_queue)):
         if((priority_queue[i].getParticleOne() is not None) and (priority_queue[i].getParticleTwo() is not None) and (priority_queue[i].getTime() < 1)):
@@ -230,6 +260,8 @@ def test_plot(self):
         
     for i in range(n_particles):
         plt.scatter(particles[i].rx, particles[i].ry, s = (np.pi * np.square(particles[i].radius)))
+        if(i == 0):
+            print("Particle ", i , " " ,particles[i].rx)
     return plt
 
 anim = animation.FuncAnimation(plt.figure(), test_plot, interval=1, frames=iterations, repeat=False)
