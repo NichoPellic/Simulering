@@ -136,10 +136,10 @@ class Event:
     def getDeltaT(self):
         return self.time_collision
         
-n_particles = 5
+n_particles = 100
 particles = []
 for i in range(n_particles):
-    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), 0.8, 1))
+    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.001, 0.001), random.uniform(-0.001, 0.001), 0.8, 1))
 
 priority_queue = []
 heapq.heapify(priority_queue)
@@ -152,15 +152,17 @@ print("Creating animations...")
 iteration_length = 0
 plot_iteratior = 0
 steps = 0
+current_time = 0
 
 def test_plot(self):
 
     global plot_iteratior
     global iteration_length
     global steps
+    global current_time
 
     plt.clf()
-    plt.title("Iteration")
+    plt.title("Time: " + str(current_time))
     plt.xlabel("x label")
     plt.ylabel("y label")
     plt.xlim(0, 1)
@@ -172,8 +174,9 @@ def test_plot(self):
 
         event = priority_queue.pop()
 
-        steps = np.linspace(0, event.getDeltaT(), 10)
+        steps = np.linspace(current_time, event.getDeltaT(), 100)
         iteration_length = (len(steps) - 1) 
+        plot_iteratior = 0
 
     #Plot particles
     else:
@@ -181,7 +184,8 @@ def test_plot(self):
             particles[i].rx += particles[i].vx * steps[plot_iteratior]
             particles[i].ry += particles[i].vy * steps[plot_iteratior]
             plt.scatter(particles[i].rx, particles[i].ry, s = (np.pi * np.square(particles[i].radius)))
-
+            
+        current_time = steps[plot_iteratior]
         plot_iteratior += 1
 
     return plt
@@ -191,18 +195,18 @@ def add_event():
 
     for i in range(n_particles - 1):
         for j in range(n_particles - 1):
-            if(particles[i].collides(particles[j]) < 500):
+            if(particles[i].collides(particles[j]) < 10000):
                 priority_queue.append(Event(particles[i], particles[i + 1], particles[i].collides(particles[i + 1])))
 
     for i in range(n_particles):
-        if(particles[i].collidesX() < 5):
+        if(particles[i].collidesX() < 500):
             event = Event(None, particles[i], particles[i].collidesX())
             for j in range(len(priority_queue)):
                 if(event == priority_queue[j]):
                     priority_queue[j] = event
             priority_queue.append(event)
         
-        if(particles[i].collidesY() < 5):
+        if(particles[i].collidesY() < 500):
             event = Event(particles[i], None, particles[i].collidesY())
             for j in range(len(priority_queue)):
                 if(event == priority_queue[j]):
