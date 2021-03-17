@@ -181,10 +181,16 @@ def test_plot(self):
     #Plot particles
     else:
         for i in range(n_particles):
-            particles[i].rx += particles[i].vx * steps[plot_iteratior]
-            particles[i].ry += particles[i].vy * steps[plot_iteratior]
-            plt.scatter(particles[i].rx, particles[i].ry, s = (np.pi * np.square(particles[i].radius)))
+            if(plot_iteratior != 0):
+                particles[i].rx += particles[i].vx * (steps[plot_iteratior] - steps[plot_iteratior - 1])
+                particles[i].ry += particles[i].vy * (steps[plot_iteratior] - steps[plot_iteratior - 1])
+                plt.scatter(particles[i].rx, particles[i].ry, s = (np.pi * np.square(particles[i].radius)))
             
+            else:
+                particles[i].rx += particles[i].vx * steps[plot_iteratior] 
+                particles[i].ry += particles[i].vy * steps[plot_iteratior]
+                plt.scatter(particles[i].rx, particles[i].ry, s = (np.pi * np.square(particles[i].radius)))
+
         current_time = steps[plot_iteratior]
         plot_iteratior += 1
 
