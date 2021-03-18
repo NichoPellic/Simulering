@@ -60,7 +60,8 @@ class Particle:
         else:
             delta_t_collision = 9999
 
-        return abs(delta_t_collision)
+        #return abs(delta_t_collision)
+        return delta_t_collision
 
     #Collision with horizontal wall
     def collidesY(self):
@@ -71,7 +72,8 @@ class Particle:
         else:
             delta_t_collision = 9999
 
-        return abs(delta_t_collision)
+        return delta_t_collision
+        #return abs(delta_t_collision)
 
     #Collision with other particle
     def bounce(self, p2):
@@ -138,15 +140,16 @@ class Event:
     def getDeltaT(self):
         return self.time_collision
         
-n_particles = 1
+n_particles = 5
 particles = []
 for i in range(n_particles):
-    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5), 0.05, 1))
+    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), 0.02, 1))
+    #particles.append(Particle(0.5, 0.5, 0.2, 0.1, 0.02, 1))    
 
 priority_queue = []
 heapq.heapify(priority_queue)
 
-iterations = 200
+iterations = 1000
 iterator = 0
 print("Creating animations...")
 
@@ -174,12 +177,11 @@ def plot(self):
         add_event()
 
         event = priority_queue[0]
+        #event = priority_queue[len(priority_queue)-1]
 
         steps = np.linspace(current_time, current_time + event.getDeltaT(), int(event.getDeltaT()*10))
-        iteration_length = (len(steps) - 1) 
+        iteration_length = (len(steps)) 
         plot_iterator = 0
-
-        print(len(priority_queue))
 
     #Move particles to their right location
     else:
@@ -187,19 +189,23 @@ def plot(self):
             if(plot_iterator != 0):
                 particles[i].rx += particles[i].vx * (steps[plot_iterator] - steps[plot_iterator - 1])
                 particles[i].ry += particles[i].vy * (steps[plot_iterator] - steps[plot_iterator - 1])
-                plt.scatter(particles[i].rx, particles[i].ry) #, s = (np.pi * np.square(particles[i].radius)))
+                plt.scatter(particles[i].rx, particles[i].ry)
             
             else:
                 particles[i].rx += particles[i].vx * (steps[plot_iterator] - current_time)
                 particles[i].ry += particles[i].vy * (steps[plot_iterator] - current_time)
-                plt.scatter(particles[i].rx, particles[i].ry) # s = (np.pi * np.square(particles[i].radius)))
-
+                plt.scatter(particles[i].rx, particles[i].ry)
+        
         current_time = steps[plot_iterator]
         plot_iterator += 1
 
     #All particles in position, update with new velocities
     if(plot_iterator == iteration_length):
-            event = priority_queue.pop()
+            print("Y coor: ", particles[0].ry)
+            print("X coor: ", particles[0].rx)
+
+            event = priority_queue[0]
+            heapq.heappop(priority_queue)
 
             if((event.getParticleOne() is not None) and (event.getParticleTwo() is not None)):
                 event.getParticleOne().bounce(event.getParticleTwo())
@@ -219,18 +225,18 @@ def add_event():
     for i in range(n_particles - 1):
         for j in range(n_particles - 1):
             if(i != j):
-                if(particles[i].collides(particles[j]) < 500):
+                if(particles[i].collides(particles[j]) < 9999):
                     priority_queue.append(Event(particles[i], particles[j], particles[i].collides(particles[j])))
 
     for i in range(n_particles):
-        if(particles[i].collidesX() < 500):
+        if(particles[i].collidesX() < 9999):
             event = Event(None, particles[i], particles[i].collidesX())
             for j in range(len(priority_queue)):
                 if(event == priority_queue[j]):
                     priority_queue[j] = event
             priority_queue.append(event)
         
-        if(particles[i].collidesY() < 500):
+        if(particles[i].collidesY() < 9999):
             event = Event(particles[i], None, particles[i].collidesY())
             for j in range(len(priority_queue)):
                 if(event == priority_queue[j]):
@@ -238,7 +244,7 @@ def add_event():
             
             priority_queue.append(event)
 
-    priority_queue = sorted(priority_queue, reverse=True)   
+    priority_queue = sorted(priority_queue)  
    
 
 anim = animation.FuncAnimation(plt.figure(), plot, interval=1, frames=iterations, repeat=False)
