@@ -207,6 +207,7 @@ def plot(self):
             event = priority_queue[0]
             heapq.heappop(priority_queue)
 
+
             if((event.getParticleOne() is not None) and (event.getParticleTwo() is not None)):
                 event.getParticleOne().bounce(event.getParticleTwo())
 
@@ -245,6 +246,7 @@ def add_event():
             priority_queue.append(event)
 
     priority_queue = sorted(priority_queue)  
+
    
 
 anim = animation.FuncAnimation(plt.figure(), plot, interval=1, frames=iterations, repeat=False)
