@@ -140,7 +140,7 @@ class Event:
     def getDeltaT(self):
         return self.time_collision
         
-n_particles = 5
+n_particles = 10
 particles = []
 for i in range(n_particles):
     particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), 0.02, 1))
@@ -177,7 +177,6 @@ def plot(self):
         add_event()
 
         event = priority_queue[0]
-        #event = priority_queue[len(priority_queue)-1]
 
         steps = np.linspace(current_time, current_time + event.getDeltaT(), int(event.getDeltaT()*10))
         iteration_length = (len(steps)) 
@@ -201,12 +200,10 @@ def plot(self):
 
     #All particles in position, update with new velocities
     if(plot_iterator == iteration_length):
-            print("Y coor: ", particles[0].ry)
-            print("X coor: ", particles[0].rx)
-
+            print("Queue before: ", len(priority_queue))
             event = priority_queue[0]
-            heapq.heappop(priority_queue)
-
+            priority_queue.remove(event)
+            print("Queue after: ", len(priority_queue))
 
             if((event.getParticleOne() is not None) and (event.getParticleTwo() is not None)):
                 event.getParticleOne().bounce(event.getParticleTwo())
@@ -222,6 +219,8 @@ def plot(self):
 #Add event to the event queue
 def add_event():
     global priority_queue
+
+    priority_queue.clear()
 
     for i in range(n_particles - 1):
         for j in range(n_particles - 1):
@@ -253,13 +252,3 @@ anim = animation.FuncAnimation(plt.figure(), plot, interval=1, frames=iterations
 #anim.save("test" + ".gif")
 plt.show()
 print("Done")
-
-
-def keep_this():
-    event = priority_queue.pop()
-
-    steps = np.linspace(0, event.getDeltaT, 100)
-
-    for i in range(len(steps) - 1):
-        particles[i].rx += particles[i].vx
-        particles[i].ry += particles[i].vy
