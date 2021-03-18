@@ -146,7 +146,7 @@ for i in range(n_particles):
 priority_queue = []
 heapq.heapify(priority_queue)
 
-iterations = 200
+iterations = 220
 iterator = 0
 print("Creating animations...")
 
@@ -199,7 +199,8 @@ def plot(self):
 
     #All particles in position, update with new velocities
     if(plot_iterator == iteration_length):
-            event = priority_queue.pop()
+            #event = priority_queue.pop()
+            event = heapq.heappop(priority_queue)
 
             if((event.getParticleOne() is not None) and (event.getParticleTwo() is not None)):
                 event.getParticleOne().bounce(event.getParticleTwo())
@@ -238,7 +239,7 @@ def add_event():
             
             priority_queue.append(event)
 
-    priority_queue = sorted(priority_queue, reverse=True)   
+    priority_queue = sorted(priority_queue)   
    
 
 anim = animation.FuncAnimation(plt.figure(), plot, interval=1, frames=iterations, repeat=False)
