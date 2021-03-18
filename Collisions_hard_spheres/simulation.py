@@ -29,13 +29,9 @@ class Particle:
         delta_v_delta_v = np.square(delta_vx) + np.square(delta_vy)
 
         delta_r = ((self.rx - p2.rx),(self.ry - p2.ry))
-        delta_v = ((self.vx - p2.vx),(self.vy - p2.vy))
-        
-        _delta_r_delta_r = np.dot(delta_r, delta_r)
-        _delta_v_delta_v = np.dot(delta_v, delta_v)
+        delta_v = ((self.vx - p2.vx),(self.vy - p2.vy))        
 
         delta_v_delta_r = (delta_vx * delta_rx) + (delta_vy * delta_ry)
-        _delta_v_delta_r = np.dot(delta_v, delta_r)
 
         d = np.square(delta_v_delta_r) - (delta_v_delta_v * (delta_r_delta_r - (np.square(self.radius + p2.radius))))
 
@@ -60,7 +56,6 @@ class Particle:
         else:
             delta_t_collision = 9999
 
-        #return abs(delta_t_collision)
         return delta_t_collision
 
     #Collision with horizontal wall
@@ -73,7 +68,6 @@ class Particle:
             delta_t_collision = 9999
 
         return delta_t_collision
-        #return abs(delta_t_collision)
 
     #Collision with other particle
     def bounce(self, p2):
@@ -82,26 +76,17 @@ class Particle:
         delta_ry = self.ry - p2.ry
         delta_vx = self.vx - p2.vx
         delta_vy = self.vy - p2.vy
-        delta_r = ((self.rx - p2.rx),(self.ry - p2.ry))
-        delta_v = ((self.vx - p2.vx),(self.vy - p2.vy))
 
         delta_v_delta_r = (delta_vx * delta_rx) + (delta_vy * delta_ry)
-        #delta_v_delta_r = np.dot(delta_v, delta_r)
 
-
-        j = (2 * self.mass * p2.mass * delta_v_delta_r) / ((self.radius + p2.radius) * (self.mass + p2.mass)) 
+        j = (2 * self.mass * p2.mass * delta_v_delta_r) / ((self.radius + p2.radius)* (self.mass + p2.mass))
         j_x = (j * delta_rx) / (self.radius + p2.radius)
         j_y = (j * delta_ry) / (self.radius + p2.radius)
-
-        #totalspeed = np.sqrt(np.square(self.vx)+np.square(self.vy)) + np.sqrt(np.square(p2.vx)+np.square(p2.vy))
 
         self.vx = self.vx - (j_x / self.mass)
         self.vy = self.vy - (j_y / self.mass)
         p2.vx = p2.vx + (j_x / p2.mass)
-        p2.vy = p2.vy + (j_y / p2.mass)
-
-        #totalspeed = np.sqrt(np.square(self.vx)+np.square(self.vy)) + np.sqrt(np.square(p2.vx)+np.square(p2.vy))
-        
+        p2.vy = p2.vy + (j_y / p2.mass)       
 
     #Reverse velocity in x direction
     def bounceX(self):
@@ -125,7 +110,7 @@ class Event:
 
     def compareTo(self, other):
         if((self.p1 == other.p1) and (self.p2 == other.p2)):
-            return true
+            return True
 
 
     def getTime(self):
@@ -143,13 +128,12 @@ class Event:
 n_particles = 10
 particles = []
 for i in range(n_particles):
-    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), 0.02, 1))
-    #particles.append(Particle(0.5, 0.5, 0.2, 0.1, 0.02, 1))    
+    particles.append(Particle(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(-0.2, 0.2), random.uniform(-0.2, 0.2), 0.02, 1))
 
 priority_queue = []
 heapq.heapify(priority_queue)
 
-iterations = 1000
+iterations = 500
 iterator = 0
 print("Creating animations...")
 
@@ -178,32 +162,35 @@ def plot(self):
 
         event = priority_queue[0]
 
-        steps = np.linspace(current_time, current_time + event.getDeltaT(), int(event.getDeltaT()*10))
+        steps = np.linspace(current_time, current_time + event.getDeltaT(), int(event.getDeltaT()*20))
         iteration_length = (len(steps)) 
+
         plot_iterator = 0
+
+        for i in range(n_particles):
+            plt.scatter(particles[i].rx, particles[i].ry)
 
     #Move particles to their right location
     else:
         for i in range(n_particles):
-            if(plot_iterator != 0):
-                particles[i].rx += particles[i].vx * (steps[plot_iterator] - steps[plot_iterator - 1])
-                particles[i].ry += particles[i].vy * (steps[plot_iterator] - steps[plot_iterator - 1])
-                plt.scatter(particles[i].rx, particles[i].ry)
-            
-            else:
+            if(plot_iterator == 0):
                 particles[i].rx += particles[i].vx * (steps[plot_iterator] - current_time)
                 particles[i].ry += particles[i].vy * (steps[plot_iterator] - current_time)
                 plt.scatter(particles[i].rx, particles[i].ry)
+            
+            else:
+                particles[i].rx += particles[i].vx * (steps[plot_iterator] - steps[plot_iterator - 1])
+                particles[i].ry += particles[i].vy * (steps[plot_iterator] - steps[plot_iterator - 1])
+                plt.scatter(particles[i].rx, particles[i].ry)
+
         
         current_time = steps[plot_iterator]
         plot_iterator += 1
 
     #All particles in position, update with new velocities
     if(plot_iterator == iteration_length):
-            print("Queue before: ", len(priority_queue))
             event = priority_queue[0]
             priority_queue.remove(event)
-            print("Queue after: ", len(priority_queue))
 
             if((event.getParticleOne() is not None) and (event.getParticleTwo() is not None)):
                 event.getParticleOne().bounce(event.getParticleTwo())
@@ -249,6 +236,6 @@ def add_event():
    
 
 anim = animation.FuncAnimation(plt.figure(), plot, interval=1, frames=iterations, repeat=False)
-#anim.save("test" + ".gif")
+anim.save("md_sim" + ".gif")
 plt.show()
 print("Done")
